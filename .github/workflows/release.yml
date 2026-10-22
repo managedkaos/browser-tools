@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*" # e.g. v0.1.0 or v2026.10.1
+
+# Creating a release and uploading assets needs write access to contents.
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish universal macOS binary
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up Swift (Xcode)
+        uses: maxim-lobanov/setup-xcode@v1.7.0
+        with:
+          xcode-version: latest-stable
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Check tag matches the version in the source
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="$(sed -n 's/^public let browsersVersion = "\(.*\)"$/\1/p' Sources/BrowsersCore/Version.swift)"
+          if [[ "$TAG" != "v${version}" ]]; then
+            echo "::error::Tag '${TAG}' does not match browsersVersion '${version}' in Sources/BrowsersCore/Version.swift"
+            exit 1
+          fi
+
+      - name: Run tests
+        run: make test
+
+      # Builds arm64 and x86_64, merges with lipo, ad-hoc signs, verifies, and
+      # writes dist/browsers-<version>-macos-universal.tar.gz and a .sha256 file.
+      - name: Build release tarball
+        run: make release
+
+      - name: Show checksum
+        run: |
+          {
+            echo "### Release artifact"
+            echo
+            echo '```'
+            cat dist/*.sha256
+            echo '```'
+            echo
+            echo "Use this sha256 in \`Formula/browsers.rb\` in the Homebrew tap."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create GitHub release and upload assets
+        uses: softprops/action-gh-release@v3.0.3
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/*.tar.gz.sha256
+          generate_release_notes: true

@@ -130,25 +130,29 @@ The version lives in one place: `Sources/BrowsersCore/Version.swift`.
 
 ## Releasing
 
-1. Bump `browsersVersion` in `Sources/BrowsersCore/Version.swift`, commit, and tag `vX.Y.Z`.
-2. Build the universal tarball:
+Releases are built and published by GitHub Actions
+(`.github/workflows/release.yml`) when a `v*` tag is pushed. CI
+(`.github/workflows/ci.yml`) runs `make test` on every push.
+
+1. Bump `browsersVersion` in `Sources/BrowsersCore/Version.swift` and commit.
+2. Tag with the same version and push the tag:
    ```sh
-   make release
+   git tag vX.Y.Z && git push origin vX.Y.Z
    ```
-   This builds arm64 and x86_64 separately, merges them with `lipo`, ad-hoc
-   signs the result, verifies it (both architectures present, only system
-   libraries linked, signature valid, `--version` matches, x86_64 slice runs
-   under Rosetta when available), and writes
-   `dist/browsers-X.Y.Z-macos-universal.tar.gz` plus a `.sha256` file.
-3. Publish the GitHub release with the tarball:
-   ```sh
-   gh release create vX.Y.Z dist/browsers-X.Y.Z-macos-universal.tar.gz \
-     --title "vX.Y.Z" --notes "..."
-   ```
-4. Update `Formula/browsers.rb`: set the `url` to the new release asset and
-   `sha256` to the value from `dist/*.sha256`.
-5. Copy `Formula/browsers.rb` into your tap repository's `Formula/` directory,
+   The workflow fails if the tag does not match `browsersVersion`. Otherwise it
+   runs the tests, runs `make release`, and creates a GitHub release with
+   generated notes plus `browsers-X.Y.Z-macos-universal.tar.gz` and its
+   `.sha256` file. The sha256 is also shown in the job summary.
+3. Update `Formula/browsers.rb`: set the `url` to the new release asset and
+   `sha256` to the value from the release's `.sha256` file.
+4. Copy `Formula/browsers.rb` into your tap repository's `Formula/` directory,
    then commit and push it there. Check it first with
    `brew style` and `brew audit --strict <tap>/browsers`.
+
+To build the same tarball locally, run `make release`. It builds arm64 and
+x86_64 separately, merges them with `lipo`, ad-hoc signs the result, verifies it
+(both architectures present, only system libraries linked, signature valid,
+`--version` matches, x86_64 slice runs under Rosetta when available), and
+writes `dist/browsers-X.Y.Z-macos-universal.tar.gz` plus a `.sha256` file.
 
 Homebrew downloads are not quarantined, so notarization is not required.

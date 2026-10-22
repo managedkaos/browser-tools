@@ -139,20 +139,33 @@ Releases are built and published by GitHub Actions
    ```sh
    git tag vX.Y.Z && git push origin vX.Y.Z
    ```
-   The workflow fails if the tag does not match `browsersVersion`. Otherwise it
-   runs the tests, runs `make release`, and creates a GitHub release with
-   generated notes plus `browsers-X.Y.Z-macos-universal.tar.gz` and its
-   `.sha256` file. The sha256 is also shown in the job summary.
-3. Update `Formula/browsers.rb`: set the `url` to the new release asset and
-   `sha256` to the value from the release's `.sha256` file.
-4. Copy `Formula/browsers.rb` into your tap repository's `Formula/` directory,
-   then commit and push it there. Check it first with
-   `brew style` and `brew audit --strict <tap>/browsers`.
+
+The workflow then:
+
+1. Fails if the tag does not match `browsersVersion`.
+2. Runs the tests and `make release`.
+3. Creates a GitHub release with generated notes, `browsers-macos-universal.tar.gz`
+   and `checksums.txt`.
+4. Calls the tap's reusable workflow
+   ([`managedkaos/homebrew-tap`](https://github.com/managedkaos/homebrew-tap),
+   `update-formula.yml`), which opens a pull request that updates
+   `Formula/browsers.rb` with the new tag and checksum. Merge that PR to
+   publish the new version to Homebrew.
+
+The asset name intentionally has no version in it: the tap's update script
+keeps the filename and only rewrites the tag in the formula URL.
+
+### One-time setup
+
+- Add the repository secrets `TAP_APP_ID` and `TAP_APP_PRIVATE_KEY` (the
+  GitHub App that can open pull requests on the tap) to this repo.
+- Add `Formula/browsers.rb` from this repo to the tap's `Formula/` directory
+  once. Its placeholder sha256 is replaced by the first automated update.
 
 To build the same tarball locally, run `make release`. It builds arm64 and
 x86_64 separately, merges them with `lipo`, ad-hoc signs the result, verifies it
 (both architectures present, only system libraries linked, signature valid,
 `--version` matches, x86_64 slice runs under Rosetta when available), and
-writes `dist/browsers-X.Y.Z-macos-universal.tar.gz` plus a `.sha256` file.
+writes `dist/browsers-macos-universal.tar.gz` plus `dist/checksums.txt`.
 
 Homebrew downloads are not quarantined, so notarization is not required.

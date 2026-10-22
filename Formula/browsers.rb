@@ -1,8 +1,11 @@
 class Browsers < Formula
   desc "Tools for working with web browsers on macOS"
   homepage "https://github.com/managedkaos/browser-tools"
-  url "https://github.com/managedkaos/browser-tools/releases/download/v0.1.0/browsers-0.1.0-macos-universal.tar.gz"
-  sha256 "REPLACE_WITH_SHA256_FROM_make_release"
+  # The tap's update workflow rewrites the release tag in `url` and `sha256` on
+  # each release (see the tap's scripts/update_formula.py). The asset name has no
+  # version in it; Homebrew reads the version from the tag in the URL path.
+  url "https://github.com/managedkaos/browser-tools/releases/download/v0.1.0/browsers-macos-universal.tar.gz"
+  sha256 "0000000000000000000000000000000000000000000000000000000000000000"
   license "MIT"
 
   depends_on macos: :sonoma

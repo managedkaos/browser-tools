@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Build a universal (arm64 + x86_64) release binary and package it for a
-# GitHub Release / Homebrew formula. Output lands in dist/.
+# GitHub Release / Homebrew formula. Output lands in dist/:
+#   browsers-macos-universal.tar.gz   (asset name has no version on purpose)
+#   checksums.txt                     (sha256sum format, read by the tap workflow)
+#
+# The asset name must not embed the version: the tap's update script keeps the
+# asset filename and only rewrites the release tag in the formula URL.
 #
 # Each architecture is built separately and merged with lipo, which works with
 # just the Command Line Tools (a multi-arch `swift build` needs full Xcode).
@@ -19,7 +24,7 @@ if [[ -z "$VERSION" ]]; then
 fi
 
 DIST=dist
-NAME="${BINARY}-${VERSION}-macos-universal"
+NAME="${BINARY}-macos-universal"
 STAGE="${DIST}/${NAME}"
 TARBALL="${DIST}/${NAME}.tar.gz"
 
@@ -83,8 +88,9 @@ cp LICENSE README.md "$STAGE"/
 tar -C "$DIST" -czf "$TARBALL" "$NAME"
 rm -rf "$STAGE"
 
-SHA="$(shasum -a 256 "$TARBALL" | awk '{print $1}')"
-echo "$SHA  $(basename "$TARBALL")" > "${TARBALL}.sha256"
+# sha256sum format ("<hash>  <filename>"), as expected by the tap workflow.
+(cd "$DIST" && shasum -a 256 "$(basename "$TARBALL")" > checksums.txt)
+SHA="$(awk '{print $1}' "${DIST}/checksums.txt")"
 
 echo
 echo "Version: ${VERSION}"

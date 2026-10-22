@@ -5,14 +5,16 @@ on:
     tags:
       - "v*" # e.g. v0.1.0 or v2026.10.1
 
-# Creating a release and uploading assets needs write access to contents.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   release:
     name: Build and publish universal macOS binary
     runs-on: macos-latest
+    # Creating a release and uploading assets needs write access to contents.
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
@@ -39,26 +41,37 @@ jobs:
         run: make test
 
       # Builds arm64 and x86_64, merges with lipo, ad-hoc signs, verifies, and
-      # writes dist/browsers-<version>-macos-universal.tar.gz and a .sha256 file.
+      # writes dist/browsers-macos-universal.tar.gz and dist/checksums.txt.
       - name: Build release tarball
         run: make release
 
-      - name: Show checksum
+      - name: Show checksums
         run: |
           {
-            echo "### Release artifact"
+            echo "### Release checksums"
             echo
             echo '```'
-            cat dist/*.sha256
+            cat dist/checksums.txt
             echo '```'
-            echo
-            echo "Use this sha256 in \`Formula/browsers.rb\` in the Homebrew tap."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create GitHub release and upload assets
         uses: softprops/action-gh-release@v3.0.3
         with:
           files: |
-            dist/*.tar.gz
-            dist/*.tar.gz.sha256
+            dist/browsers-macos-universal.tar.gz
+            dist/checksums.txt
           generate_release_notes: true
+
+  update-tap:
+    name: Update Homebrew tap
+    needs: release
+    permissions:
+      contents: read
+    uses: managedkaos/homebrew-tap/.github/workflows/update-formula.yml@main
+    with:
+      formula: browsers
+      tag: ${{ github.ref_name }}
+    secrets:
+      TAP_APP_ID: ${{ secrets.TAP_APP_ID }}
+      TAP_APP_PRIVATE_KEY: ${{ secrets.TAP_APP_PRIVATE_KEY }}

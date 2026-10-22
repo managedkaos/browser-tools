@@ -31,15 +31,25 @@ Lists installed web browsers, meaning apps registered with macOS to open
 
 ```
 $ browsers
+NAME           BUNDLE ID                   PATH
+-------------  --------------------------  ------------------------
 Arc            company.thebrowser.Browser  /Applications/Arc.app
 Brave Browser  com.brave.Browser           /Applications/Brave Browser.app
 Safari         com.apple.Safari            /Applications/Safari.app
 ```
 
+On a terminal the table has a header row, and a `PATH` too long for the window
+is shortened in the middle with `…` (the start and the `.app` name are kept;
+`NAME` and `BUNDLE ID` are never shortened). When output is piped or redirected
+there is no header and nothing is shortened, so scripts see plain rows.
+
 | Flag | Meaning |
 |---|---|
 | `-a`, `--all` | Show everything Launch Services reports, ignoring built-in and user filters (still sorted) |
-| `--json` | Print JSON (`name`, `bundleId`, `path`) instead of a table |
+| `--json` | Print JSON (`name`, `bundleId`, `path`) instead of a table. Never shortened |
+| `--markdown` | Print a Markdown table (always with a header row, never shortened). Cannot be combined with `--json` |
+| `--id`, `--bundle-id` | Print only the bundle ID column, in any output mode (see below) |
+| `--no-truncate` | On a terminal, show full paths instead of shortening them to fit |
 | `--config <path>` | Read configuration from this file instead of the default |
 | `--no-config` | Ignore the user configuration file |
 
@@ -47,23 +57,42 @@ By default the following are hidden: non-browser link handlers (Finicky,
 Codex, cmux, iTerm2), updater copies (`/EdgeUpdater/`), Playwright test
 builds (`/playwright/`), and duplicate bundle IDs (first one wins).
 
+`--id` (alias `--bundle-id`) keeps only the bundle ID column and applies to
+every output mode, so scripts need no `awk` or `jq`:
+
+| Command | Output |
+|---|---|
+| `browsers --id \| …` | One bare bundle ID per line, no header (a terminal gets a `BUNDLE ID` header) |
+| `browsers --id --markdown` | A one-column `BUNDLE ID` table |
+| `browsers --id --json` | `[{"bundleId": "…"}, …]`, the same key as the full JSON |
+
+Bundle IDs are never shortened, and `--id` works with `--all` and the
+configuration flags.
+
 ### `browsers list-profiles`
 
-Lists profiles as folder, display name and signed-in account. Use the display
-name as the profile in `finicky.js`. With no flags it shows Google Chrome.
+Lists profiles as folder, display name and signed-in account. Use the
+`PROFILE NAME` column (the display name) as the profile in `finicky.js`. With
+no flags it shows Google Chrome.
 
 ```
 $ browsers list-profiles
 == Google Chrome
-Default    Work      me@example.com
-Profile 1  Personal  me@gmail.com
+FOLDER     PROFILE NAME  ACCOUNT
+---------  ------------  --------------
+Default    Work          me@example.com
+Profile 1  Personal      me@gmail.com
 ```
+
+As with `browsers list`, the header row appears only on a terminal; piped
+output has just the rows.
 
 | Flag | Meaning |
 |---|---|
 | `--canary` | Show Google Chrome Canary |
 | `--browser <name>` | Show another registered browser by name, or `all` for every registered browser |
 | `--json` | Print JSON (`browser`, `browserName`, `folder`, `name`, `account`; missing values are `null`) |
+| `--markdown` | Print Markdown instead of a table: a `## Browser` heading and a table per browser. Cannot be combined with `--json` |
 
 `--canary` and `--browser` cannot be combined. Registered browsers today are
 `chrome` and `canary`. With `--browser all`, browsers that have no profile

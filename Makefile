@@ -17,6 +17,19 @@ endif
 help: ## Display available targets
 	@awk 'BEGIN {FS = ":.*## "}; /^[a-zA-Z0-9_-]+:.*## / {printf "\033[36m%-28s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
+all: test install ## Run test, install the binary, and operate the CLI
+	browsers --version
+	browsers --help
+	browsers
+	browsers --id
+	browsers --markdown
+	browsers --markdown --id
+	browsers --json
+	browsers --json --id
+	browsers list-profiles
+	browsers list-profiles --markdown
+	browsers list-profiles --json
+
 build: ## Build the debug binary
 	swift build
 

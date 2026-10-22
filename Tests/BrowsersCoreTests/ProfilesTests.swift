@@ -128,6 +128,83 @@ import Testing
         #expect(formatProfilesTable(groups) == expected)
     }
 
+    @Test func tableOutputWithHeader() {
+        let groups = [BrowserProfiles(
+            browserId: "chrome", browserName: "Google Chrome",
+            profiles: [
+                Profile(folder: "Default", name: "Person 1", account: "me@example.com"),
+                Profile(folder: "Profile 1", name: nil, account: nil),
+            ]
+        )]
+        let expected = """
+            == Google Chrome
+            FOLDER     PROFILE NAME  ACCOUNT
+            ---------  ------------  --------------
+            Default    Person 1      me@example.com
+            Profile 1  -             -
+
+            """
+        #expect(formatProfilesTable(groups, header: true) == expected)
+    }
+
+    @Test func headerRepeatsPerBrowserAndEmptyGroupsPrintOnlyTheBanner() {
+        let groups = [
+            BrowserProfiles(
+                browserId: "chrome", browserName: "Google Chrome",
+                profiles: [Profile(folder: "Default", name: "Work", account: "a@b.co")]
+            ),
+            BrowserProfiles(browserId: "canary", browserName: "Google Chrome Canary", profiles: []),
+            BrowserProfiles(
+                browserId: "other", browserName: "Other",
+                profiles: [Profile(folder: "Default", name: "Work", account: "a@b.co")]
+            ),
+        ]
+        let expected = """
+            == Google Chrome
+            FOLDER   PROFILE NAME  ACCOUNT
+            -------  ------------  -------
+            Default  Work          a@b.co
+
+            == Google Chrome Canary
+
+            == Other
+            FOLDER   PROFILE NAME  ACCOUNT
+            -------  ------------  -------
+            Default  Work          a@b.co
+
+            """
+        #expect(formatProfilesTable(groups, header: true) == expected)
+    }
+
+    @Test func markdownHasHeadingPerBrowserAndHeadingOnlyForEmptyGroups() {
+        let groups = [
+            BrowserProfiles(
+                browserId: "chrome", browserName: "Google Chrome",
+                profiles: [Profile(folder: "Default", name: "Work", account: "a@b.co")]
+            ),
+            BrowserProfiles(browserId: "canary", browserName: "Google Chrome Canary", profiles: []),
+        ]
+        let expected = """
+            ## Google Chrome
+
+            | FOLDER  | PROFILE NAME | ACCOUNT |
+            | ------- | ------------ | ------- |
+            | Default | Work         | a@b.co  |
+
+            ## Google Chrome Canary
+
+            """
+        #expect(formatProfilesMarkdown(groups) == expected)
+    }
+
+    @Test func markdownUsesDashForMissingValues() {
+        let groups = [BrowserProfiles(
+            browserId: "chrome", browserName: "Google Chrome",
+            profiles: [Profile(folder: "Profile 1", name: nil, account: nil)]
+        )]
+        #expect(formatProfilesMarkdown(groups).contains("| Profile 1 | -            | -       |"))
+    }
+
     @Test func jsonOutputUsesNullForMissingFields() throws {
         let groups = [BrowserProfiles(
             browserId: "chrome", browserName: "Google Chrome",

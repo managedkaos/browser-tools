@@ -175,11 +175,29 @@ private struct ProfileRecord: Encodable {
     }
 }
 
-public func formatProfilesTable(_ groups: [BrowserProfiles]) -> String {
+public let profilesTableHeader = ["FOLDER", "PROFILE NAME", "ACCOUNT"]
+
+/// - Parameter header: Include the column labels and underline under each
+///   browser banner. Browsers without profiles print only the banner.
+public func formatProfilesTable(_ groups: [BrowserProfiles], header: Bool = false) -> String {
     groups.map { group in
         let rows = group.profiles.map { [$0.folder, $0.name ?? "-", $0.account ?? "-"] }
-        let header = "== \(group.browserName)"
-        return rows.isEmpty ? header + "\n" : header + "\n" + formatTable(rows) + "\n"
+        let banner = "== \(group.browserName)"
+        return rows.isEmpty
+            ? banner + "\n"
+            : banner + "\n" + formatTable(rows, header: header ? profilesTableHeader : nil) + "\n"
+    }.joined(separator: "\n")
+}
+
+/// Markdown: a `## Browser` heading per browser, then its table. Browsers
+/// without profiles get only the heading.
+public func formatProfilesMarkdown(_ groups: [BrowserProfiles]) -> String {
+    groups.map { group in
+        let heading = "## \(escapeMarkdownCell(group.browserName))"
+        let rows = group.profiles.map { [$0.folder, $0.name ?? "-", $0.account ?? "-"] }
+        return rows.isEmpty
+            ? heading + "\n"
+            : heading + "\n\n" + formatMarkdownTable(rows, header: profilesTableHeader) + "\n"
     }.joined(separator: "\n")
 }
 

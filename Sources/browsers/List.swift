@@ -2,7 +2,11 @@ import ArgumentParser
 import BrowsersCore
 
 struct ConfigOptions: ParsableArguments {
-    @Option(name: .long, help: "Read configuration from this file instead of the default.")
+    @Option(
+        name: .long,
+        help: "Read configuration from this file instead of the default.",
+        completion: .file(extensions: ["yaml", "yml"])
+    )
     var config: String?
 
     @Flag(name: .long, help: "Ignore the user configuration file.")

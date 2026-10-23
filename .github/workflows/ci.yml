@@ -24,3 +24,6 @@ jobs:
 
       - name: Run tests
         run: make test
+
+      - name: Check shell completions
+        run: make check-completions

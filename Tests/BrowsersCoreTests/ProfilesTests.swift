@@ -27,6 +27,16 @@ import Testing
         }}}
         """
 
+    @Test func browserArgumentValuesCoverRegistryPlusAll() {
+        let registry = ProfileRegistry.standard()
+        let values = registry.browserArgumentValues
+        #expect(values == registry.ids + ["all"])
+        #expect(values.contains("chrome"))
+        #expect(values.contains("canary"))
+        #expect(values.contains("all"))
+        #expect(!registry.ids.contains("all"))
+    }
+
     @Test func loadsProfilesWithNaturalSortAndMissingFieldsAsNil() throws {
         let root = try makeAppSupport(["Google/Chrome": sample])
         defer { try? FileManager.default.removeItem(at: root) }

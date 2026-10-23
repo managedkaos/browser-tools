@@ -17,7 +17,8 @@ struct ListProfiles: ParsableCommand {
 
     @Option(
         name: .long,
-        help: "Show another registered browser by name, or 'all' for every registered browser."
+        help: "Show another registered browser by name, or 'all' for every registered browser.",
+        completion: .list(ProfileRegistry.standard().browserArgumentValues)
     )
     var browser: String?
 

@@ -16,9 +16,12 @@ brew install managedkaos/<tap>/browsers
 From source (needs the Xcode Command Line Tools):
 
 ```sh
-make install              # installs to ~/.local/bin
+make install              # installs to ~/.local/bin, plus shell completions
 make install PREFIX=/usr/local
 ```
+
+Tab completion for bash, zsh and fish needs a one-time shell setup; see
+[Shell completions](#shell-completions).
 
 ## Usage
 
@@ -101,11 +104,100 @@ data is an error.
 
 ### Shell completions
 
+`browsers` can complete subcommands, flags and some values (`--browser`
+completes `chrome`, `canary` and `all`; `--config` completes YAML files) in
+bash, zsh and fish. The completion scripts come from the CLI itself:
+
 ```sh
-browsers --generate-completion-script zsh    # or bash, fish
+browsers --generate-completion-script bash   # or zsh, fish
 ```
 
-Homebrew installs completions automatically.
+The shell is detected from `$SHELL` when you leave it out. `browsers --help`
+also mentions this flag. Pick the section below that matches how you installed
+`browsers`, then open a new terminal window.
+
+#### Homebrew
+
+`brew install` puts the completion files in place for all three shells, but
+your shell still has to look in Homebrew's directories.
+
+- **zsh**: add this to `~/.zshrc`, *before* `compinit`:
+
+  ```sh
+  FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
+  autoload -Uz compinit && compinit
+  ```
+
+- **bash**: install `bash-completion@2` (`brew install bash-completion@2`) and
+  follow the instructions it prints, which add a `source` line for
+  `bash_completion.sh` to `~/.bashrc` or `~/.bash_profile`.
+- **fish**: nothing to do if fish itself came from Homebrew, because it already
+  searches Homebrew's `share/fish/vendor_completions.d`. Otherwise use the
+  manual option below.
+
+#### `make install`
+
+`make install` writes the completion files next to the binary, under the same
+`PREFIX` (default `~/.local`), and `make uninstall` removes them:
+
+| Shell | File |
+|---|---|
+| bash | `$PREFIX/share/bash-completion/completions/browsers` |
+| zsh | `$PREFIX/share/zsh/site-functions/_browsers` |
+| fish | `$PREFIX/share/fish/vendor_completions.d/browsers.fish` |
+
+Your shell may not look there by default:
+
+- **zsh**: add this to `~/.zshrc`, *before* `compinit` (use your `PREFIX` if it
+  is not `~/.local`; `/usr/local/share/zsh/site-functions` is already searched):
+
+  ```sh
+  fpath=(~/.local/share/zsh/site-functions $fpath)
+  autoload -Uz compinit && compinit
+  ```
+
+- **bash**: needs [bash-completion](https://github.com/scop/bash-completion)
+  v2 (`brew install bash-completion@2`, then source it from your rc file). It
+  loads `~/.local/share/bash-completion/completions/browsers` on demand. For a
+  different `PREFIX`, use the manual option below.
+- **fish**: nothing to do for the default `PREFIX`, because fish searches
+  `~/.local/share/fish/vendor_completions.d`. For a different `PREFIX`, use
+  the manual option below.
+
+#### Manual (no files installed by make or Homebrew)
+
+- **bash**: add to `~/.bashrc` (or `~/.bash_profile`). `eval` is used because
+  `source <(...)` does not work in the macOS system bash 3.2:
+
+  ```sh
+  eval "$(browsers --generate-completion-script bash)"
+  ```
+
+- **zsh**: add to `~/.zshrc`, *after* `compinit`:
+
+  ```sh
+  autoload -Uz compinit && compinit
+  source <(browsers --generate-completion-script zsh)
+  ```
+
+- **fish**:
+
+  ```sh
+  mkdir -p ~/.config/fish/completions
+  browsers --generate-completion-script fish > ~/.config/fish/completions/browsers.fish
+  ```
+
+#### Troubleshooting
+
+- Nothing completes in zsh: run `rm -f ~/.zcompdump*` and start a new shell so
+  `compinit` rebuilds its cache. Check that the directory holding `_browsers`
+  appears in `echo $fpath` (one item per line: `print -l $fpath`).
+- Completions go stale after an upgrade that adds flags or subcommands:
+  regenerate the file (`make install` again, or re-run the redirect above).
+  The `eval` and `source <(...)` lines always generate fresh scripts.
+- The completions were checked with bash 3.2 (the macOS system bash), bash 5
+  (Homebrew), zsh 5.9 and fish, by calling the completion functions directly
+  (bash, fish) and with real TAB presses (zsh).
 
 ## Configuration
 
@@ -152,6 +244,7 @@ planned. Chromium-family browsers only need an entry in `ProfileRegistry`
 make help      # list targets
 make build     # debug build
 make test      # run the tests (Swift Testing)
+make check-completions   # smoke-test shell completions and install/uninstall
 make run ARGS="list-profiles --canary"
 ```
 

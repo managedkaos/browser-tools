@@ -116,6 +116,10 @@ public struct ProfileRegistry: Sendable {
 
     public var ids: [String] { providers.map(\.id) }
 
+    /// Values `--browser` accepts: every registered ID plus `all`. Used for
+    /// shell completion, so it stays in sync with the registry.
+    public var browserArgumentValues: [String] { ids + ["all"] }
+
     /// Which providers to query, and whether the user asked for them by name.
     public struct Selection: Sendable {
         public let providers: [any ProfileProvider]

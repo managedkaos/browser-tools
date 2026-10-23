@@ -12,7 +12,11 @@ TEST_FLAGS := --enable-swift-testing --disable-xctest \
 	-Xlinker -rpath -Xlinker $(CLT_FRAMEWORKS) -Xlinker -rpath -Xlinker $(CLT_LIBS)
 endif
 
-.PHONY: help build test run clean install uninstall release
+BASH_COMPLETION_FILE := $(PREFIX)/share/bash-completion/completions/$(BINARY)
+ZSH_COMPLETION_FILE := $(PREFIX)/share/zsh/site-functions/_$(BINARY)
+FISH_COMPLETION_FILE := $(PREFIX)/share/fish/vendor_completions.d/$(BINARY).fish
+
+.PHONY: help build test run clean install uninstall release check-completions
 
 help: ## Display available targets
 	@awk 'BEGIN {FS = ":.*## "}; /^[a-zA-Z0-9_-]+:.*## / {printf "\033[36m%-28s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -43,14 +47,27 @@ clean: ## Remove build artifacts and release output
 	swift package clean
 	rm -rf dist
 
-install: ## Install the release binary into PREFIX/bin
+install: ## Install the release binary and shell completions into PREFIX
 	swift build -c release
 	install -d "$(PREFIX)/bin"
 	install -m 755 "$$(swift build -c release --show-bin-path)/$(BINARY)" "$(PREFIX)/bin/$(BINARY)"
 	@echo "Installed $(PREFIX)/bin/$(BINARY)"
+	install -d "$(dir $(BASH_COMPLETION_FILE))" "$(dir $(ZSH_COMPLETION_FILE))" "$(dir $(FISH_COMPLETION_FILE))"
+	"$(PREFIX)/bin/$(BINARY)" --generate-completion-script bash > "$(BASH_COMPLETION_FILE)"
+	"$(PREFIX)/bin/$(BINARY)" --generate-completion-script zsh > "$(ZSH_COMPLETION_FILE)"
+	"$(PREFIX)/bin/$(BINARY)" --generate-completion-script fish > "$(FISH_COMPLETION_FILE)"
+	@echo "Installed completions:"
+	@echo "  $(BASH_COMPLETION_FILE)"
+	@echo "  $(ZSH_COMPLETION_FILE)"
+	@echo "  $(FISH_COMPLETION_FILE)"
+	@echo "See the README (Shell completions) to enable them in your shell."
 
-uninstall: ## Remove the binary from PREFIX/bin
+uninstall: ## Remove the binary and shell completions from PREFIX
 	rm -f "$(PREFIX)/bin/$(BINARY)"
+	rm -f "$(BASH_COMPLETION_FILE)" "$(ZSH_COMPLETION_FILE)" "$(FISH_COMPLETION_FILE)"
+
+check-completions: ## Smoke-test generated shell completions and the install round trip
+	./scripts/check-completions.sh
 
 release: ## Build the universal release tarball in dist/
 	./scripts/release.sh

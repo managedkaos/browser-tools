@@ -10,7 +10,7 @@ Requires macOS 14 (Sonoma) or later.
 With Homebrew (from the `managedkaos` tap):
 
 ```sh
-brew install managedkaos/<tap>/browsers
+brew install managedkaos/tap/browsers
 ```
 
 From source (needs the Xcode Command Line Tools):

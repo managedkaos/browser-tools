@@ -99,6 +99,28 @@ output has just the rows.
 data on this machine are skipped. When you name a browser explicitly, missing
 data is an error.
 
+### `browsers list-extensions`
+
+Lists installed extensions by browser and profile folder, including disabled
+extensions. Each row shows the folder, extension name, version and ID. The
+table uses browser headings and shows column labels only on a terminal.
+
+```sh
+browsers list-extensions
+browsers list-extensions --browser firefox
+browsers list-extensions --browser all --json
+browsers list-extensions --browser brave --markdown
+```
+
+Google Chrome is the default. Supported browser IDs are `chrome`, `canary`,
+`edge`, `brave`, `chromium`, `vivaldi` and `firefox`. Use `--canary` as a
+shortcut for `--browser canary`. Use `--browser all` to scan all supported
+browsers with local profile data.
+
+JSON prints an array with `browser`, `browserName`, `folder`, `id`, `name`
+and `version` fields. If the version is unavailable, JSON uses an empty string
+and the tables display `-`. Markdown prints one heading and table per browser.
+
 ### Shell completions
 
 ```sh

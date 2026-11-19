@@ -8,7 +8,7 @@ struct Browsers: ParsableCommand {
         abstract: "Tools for working with web browsers on macOS.",
         discussion: "Running `browsers` with no subcommand is the same as `browsers list`.",
         version: browsersVersion,
-        subcommands: [List.self, ListProfiles.self],
+        subcommands: [List.self, ListProfiles.self, ListExtensions.self],
         defaultSubcommand: List.self
     )
 }
